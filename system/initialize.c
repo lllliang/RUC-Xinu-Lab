@@ -198,6 +198,8 @@ static	void	sysinit()
 
 	clkinit();
 
+	sndreadylist = newqueue();
+
 	for (i = 0; i < NDEVS; i++) {
 		init(i);
 	}

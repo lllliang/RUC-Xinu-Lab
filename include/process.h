@@ -52,6 +52,8 @@ struct procent {		/* Entry in the process table		*/
 	umsg32	prmsg;		/* Message sent to this process		*/
 	bool8	prhasmsg;	/* Nonzero iff msg is valid		*/
 	int16	prdesc[NDESC];	/* Device descriptors for process	*/
+	uint32	prtime; 	/* 记录程序运行时间 */
+	uint16	prremain;	/* 剩下可运行的时间数 */
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/

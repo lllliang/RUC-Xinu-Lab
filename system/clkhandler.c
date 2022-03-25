@@ -33,6 +33,19 @@ void	clkhandler(void)
 		}
 	}
 
+	/* 进程时间计数器 */
+	struct	procent	*prptr;
+	prptr = &proctab[getpid()];
+	prptr->prtime++;
+
+	/* 递减可用时间片 */
+	// prptr->prremain--;
+	if((--prptr->prremain) <= 0){
+		preempt = QUANTUM;
+		resched();
+		return;
+	}
+
 	/* Decrement the preemption counter, and reschedule when the */
 	/*   remaining time reaches zero			     */
 

@@ -2,7 +2,7 @@
 
 #include <xinu.h>
 
-struct qentry	queuetab[NQENT];	/* Table of process queues	*/
+struct qentry	queuetab[306];	/* Table of process queues	*/
 
 /*------------------------------------------------------------------------
  *  enqueue  -  Insert a process at the tail of a queue
@@ -15,7 +15,10 @@ pid32	enqueue(
 {
 	qid16	tail, prev;		/* Tail & previous node indexes	*/
 
-	if (isbadqid(q) || isbadpid(pid)) {
+	// if (isbadqid(q) || isbadpid(pid)) {
+	// 	return SYSERR;
+	// }
+	if((int32)(q) < NPROC || (int32)(q) >=305 || isbadpid(pid)){
 		return SYSERR;
 	}
 
@@ -39,7 +42,7 @@ pid32	dequeue(
 {
 	pid32	pid;			/* ID of process removed	*/
 
-	if (isbadqid(q)) {
+	if ((int32)(q) < NPROC || (int32)(q) >=305) {
 		return SYSERR;
 	} else if (isempty(q)) {
 		return EMPTY;

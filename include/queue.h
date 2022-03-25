@@ -5,7 +5,8 @@
 /* Default # of queue entries: 1 per process plus 2 for ready list plus	*/
 /*			2 for sleep list plus 2 per semaphore		*/
 #ifndef NQENT
-#define NQENT	(NPROC + 4 + NSEM + NSEM)
+#define NQENT	(NPROC + 6 + NSEM + NSEM) //100 + 4 + 100 + 100 = 304
+// #define NQENT	306
 #endif
 
 #define	EMPTY	(-1)		/* Null value for qnext or qprev index	*/
@@ -33,4 +34,5 @@ extern	struct qentry	queuetab[];
 
 /* Inline to check queue id assumes interrupts are disabled */
 
-#define	isbadqid(x)	(((int32)(x) < NPROC) || (int32)(x) >= NQENT-1)
+#define	isbadqid(x)	(((int32)(x) < NPROC) || (int32)(x) >= 305)
+		//呜呜呜，为啥改了没啥用嘞？？？

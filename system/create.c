@@ -55,6 +55,11 @@ pid32	create(
 	prptr->prdesc[1] = CONSOLE;
 	prptr->prdesc[2] = CONSOLE;
 
+	/* 初始化程序运行时间 */
+	prptr->prtime = 0;
+	
+	prptr->prremain = init_remain_time(priority);
+
 	/* Initialize stack as if the process was called		*/
 
 	*saddr = STACKMAGIC;
