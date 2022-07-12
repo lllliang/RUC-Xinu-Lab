@@ -3,6 +3,7 @@
 #include <xinu.h>
 
 struct	defer	Defer;
+extern struct TSS_ TSS;
 
 
 void reset_remain_time(uint16 q2size){
@@ -34,7 +35,7 @@ pid32 mux_pid(
 {
 	//下列操作集合成一个函数叭
 	if(q1size == 1 && q2size > 0){
-		reset_remain_time(q2size); /* 还没实现 */
+		reset_remain_time(q2size); 
 		/* choose a currpid */
 		return get_pid();
 	}
@@ -70,6 +71,9 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptold = &proctab[currpid];
 
 	if (ptold->prstate == PR_CURR) {  /* Process remains eligible */
+		if (ptold->prprio > firstkey(readylist) && ptold->prremain > 0) {
+			return;   //如果当前进程的优先级大于readylist
+		}
 		// if (ptold->prprio > firstkey(readylist)) {
 		// 	return;   //如果当前进程的优先级大于readylist
 		// }
@@ -89,6 +93,10 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	ptnew = &proctab[currpid];
 	ptnew->prstate = PR_CURR;
 	preempt = QUANTUM;		/* Reset time slice for process	*/
+
+	// syscall_ltss((7 + currpid) << 3);
+	TSS.esp0 = ptnew->esp0;
+
 	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
 
 	/* Old process returns here when resumed */

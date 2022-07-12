@@ -27,5 +27,8 @@
 #include <string.h>
 #include <remain.h>
 #include <insert.h>
+#include <meminit.h>
+#include <syscalls.h>
+#include <stdarg.h>
 
 

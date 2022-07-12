@@ -47,7 +47,7 @@
 #define	MULTIBOOT_HEADER_FLAGS  0x00010003
 #define MULTIBOOT_SIGNATURE	0x2BADB002	/* Multiboot signature verification	*/
 #define MULTIBOOT_BOOTINFO_MMAP	0x00000040	/* mmap_length mmap_addr valid		*/
-#define	GDT_ENTRIES		4
+#define	GDT_ENTRIES		107
 #define	GDT_ENTRY_SIZE		8
 #define	GDT_BYTES		(GDT_ENTRIES * GDT_ENTRY_SIZE)
 #define	IDT_ENTRIES		256
@@ -348,3 +348,21 @@ cpuid:
 	cpuid
 	popl	%ebx
 	ret			# return value in %eax
+
+	.globl	ret_k2u
+ret_k2u:
+	popl	%eax
+	movw	%ax, %gs
+	popl	%eax
+	movw	%ax, %fs
+	popl	%eax
+	movw	%ax, %es
+	popl	%eax
+	movw	%ax, %ds
+	iret
+
+	.global ltss
+ltss:
+	movl	4(%esp), %eax
+	ltr		%ax
+	ret

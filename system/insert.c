@@ -41,13 +41,43 @@ status insert2ready(
 
 
 
+// status	insert(
+// 	  pid32		pid,		/* ID of process to insert	*/
+// 	  qid16		q,		/* ID of queue to use		*/
+// 	  int32		key		/* Key for the inserted process	*/
+// 	)
+// {
+// 	qid16	tail, prev;
+
+// 	if((int32)(q) < NPROC || (int32)(q) >=305 || isbadpid(pid)){
+// 		return SYSERR;
+// 	}
+// 	// if (isbadqid(q) || isbadpid(pid)) {
+// 	// 	return SYSERR;
+// 	// }
+
+// 	tail = queuetail(q);
+// 	prev = queuetab[tail].qprev;
+
+// 	queuetab[pid].qnext = tail;
+// 	queuetab[pid].qprev = prev;
+// 	queuetab[pid].qkey = key;
+// 	queuetab[prev].qnext = pid;
+// 	queuetab[tail].qprev = pid;
+// 	return OK;
+// }
+
+
+
+
 status	insert(
 	  pid32		pid,		/* ID of process to insert	*/
 	  qid16		q,		/* ID of queue to use		*/
 	  int32		key		/* Key for the inserted process	*/
 	)
 {
-	qid16	tail, prev;
+	qid16	curr;			/* Runs through items in a queue*/
+	qid16	prev;			/* Holds previous node index	*/
 
 	if((int32)(q) < NPROC || (int32)(q) >=305 || isbadpid(pid)){
 		return SYSERR;
@@ -56,45 +86,18 @@ status	insert(
 	// 	return SYSERR;
 	// }
 
-	tail = queuetail(q);
-	prev = queuetab[tail].qprev;
+	curr = firstid(q);
+	while (queuetab[curr].qkey >= key) {
+		curr = queuetab[curr].qnext;
+	}
 
-	queuetab[pid].qnext = tail;
+	/* Insert process between curr node and previous node */
+
+	prev = queuetab[curr].qprev;	/* Get index of previous node	*/
+	queuetab[pid].qnext = curr;
 	queuetab[pid].qprev = prev;
 	queuetab[pid].qkey = key;
 	queuetab[prev].qnext = pid;
-	queuetab[tail].qprev = pid;
+	queuetab[curr].qprev = pid;
 	return OK;
 }
-
-
-
-
-// status	insert(
-// 	  pid32		pid,		/* ID of process to insert	*/
-// 	  qid16		q,		/* ID of queue to use		*/
-// 	  int32		key		/* Key for the inserted process	*/
-// 	)
-// {
-// 	qid16	curr;			/* Runs through items in a queue*/
-// 	qid16	prev;			/* Holds previous node index	*/
-
-// 	if (isbadqid(q) || isbadpid(pid)) {
-// 		return SYSERR;
-// 	}
-
-// 	curr = firstid(q);
-// 	while (queuetab[curr].qkey >= key) {
-// 		curr = queuetab[curr].qnext;
-// 	}
-
-// 	/* Insert process between curr node and previous node */
-
-// 	prev = queuetab[curr].qprev;	/* Get index of previous node	*/
-// 	queuetab[pid].qnext = curr;
-// 	queuetab[pid].qprev = prev;
-// 	queuetab[pid].qkey = key;
-// 	queuetab[prev].qnext = pid;
-// 	queuetab[curr].qprev = pid;
-// 	return OK;
-// }

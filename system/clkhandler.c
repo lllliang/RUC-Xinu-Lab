@@ -39,10 +39,10 @@ void	clkhandler(void)
 	prptr->prtime++;
 
 	/* 递减可用时间片 */
-	// prptr->prremain--;
+	prptr->prremain--;
 	if((--prptr->prremain) <= 0){
 		preempt = QUANTUM;
-		resched();
+		// resched();
 		return;
 	}
 
@@ -51,6 +51,6 @@ void	clkhandler(void)
 
 	if((--preempt) <= 0) {
 		preempt = QUANTUM;
-		resched();
+		// resched();
 	}
 }

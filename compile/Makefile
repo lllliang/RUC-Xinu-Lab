@@ -8,7 +8,13 @@
 #									#
 #########################################################################
 
-COMPILER_ROOT	=	/usr/bin/
+# compiler should in path
+ifeq ($(shell uname), Darwin)
+	COMPILER_ROOT	=	x86_64-elf-
+else
+	COMPILER_ROOT	=	
+endif
+
 PNAME		=	QEMU
 PLAT		=	Platform_$(PNAME)
 TOPDIR		=	..
@@ -39,8 +45,8 @@ INCLUDE		=	-I$(TOPDIR)/include
 DEFS		= 	-DBSDURG -DVERSION=\""`cat $(VERSIONFILE)`"\"
 
 # Compiler flags
-# CFLAGS  = -march=i586 -m32 -ggdb -fno-builtin -fno-stack-protector -nostdlib -c -Wall -O0 ${DEFS} ${INCLUDE}
-CFLAGS  = -march=i586 -m32 -fno-builtin -fno-stack-protector -nostdlib -c -Wall -O0 -ggdb ${DEFS} ${INCLUDE}
+CFLAGS  = -march=i586 -m32 -ggdb -fno-builtin -fno-stack-protector -nostdlib -c -Wall -O0 ${DEFS} ${INCLUDE}
+# CFLAGS  = -march=i586 -m32 -fno-builtin -fno-stack-protector -nostdlib -c -Wall -O0 ${DEFS} ${INCLUDE}
 SFLAGS  = ${INCLUDE}
 
 # Loader flags
@@ -126,6 +132,7 @@ clean:
 	@(cd $(TOPDIR)/config; make clean)
 	@echo removing xinu ...
 	@rm -f $(XINU)
+	@rm -f xinu.map
 
 #--------------------------------------------------------------------------------
 # Locations of source directories and exceptions (.c and .[sS] files to exclude)

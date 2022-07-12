@@ -17,6 +17,14 @@ struct	mbootinfo *bootinfo = (struct mbootinfo *)1;
 				/*  to guarantee it is in the DATA	*/
 				/*  segment and not the BSS		*/
 
+
+// struct TSS_ TSS[NPROC]; 
+
+
+struct TSS_ TSS;
+
+
+
 /* Segment table structures */
 
 /* Segment Descriptor */
@@ -30,7 +38,8 @@ struct __attribute__ ((__packed__)) sd {
 	unsigned char	sd_hibase;
 };
 
-#define	NGD			4	/* Number of global descriptor entries	*/
+// #define	NGD			107	/* Number of global descriptor entries	*/
+#define NGD		8
 #define FLAGS_GRANULARITY	0x80
 #define FLAGS_SIZE		0x40
 #define	FLAGS_SETTINGS		(FLAGS_GRANULARITY | FLAGS_SIZE)
@@ -39,15 +48,24 @@ struct sd gdt_copy[NGD] = {
 /*   sd_lolimit  sd_lobase   sd_midbase  sd_access   sd_hilim_fl sd_hibase */
 /* 0th entry NULL */
 {            0,          0,           0,         0,            0,        0, },
-/* 1st, Kernel Code Segment */
+/* 1st, Kernel Code Segment */				//1001 1010		//1100 1111
 {       0xffff,          0,           0,      0x9a,         0xcf,        0, },
 /* 2nd, Kernel Data Segment */
 {       0xffff,          0,           0,      0x92,         0xcf,        0, },
-/* 3rd, Kernel Stack Segment */
+/* 3rd, Kernel Stack Segment */				//1001 0010
 {       0xffff,          0,           0,      0x92,         0xcf,        0, },
+/* 4th, User Code Segment */				//1111 1010		//1100 0000
+{		0xffff,			 0,			  0,	  0xfa,			0xc0,		 0, },
+/* 5th  User Data Segment */
+{		0xffff,			 0,			  0,	  0xf2, 		0xc0, 		 0, },
+/* 6th  User Stack Segment */
+{		0xffff,			 0,			  0,	  0xf2, 		0xc0, 		 0, },
+// /* 7th	Tss */
+{		0x67,	 		 0,			  0, 	  0x89,			0x00,		 0, }
 };
-
 extern	struct	sd gdt[];	/* Global segment table			*/
+
+
 
 /*------------------------------------------------------------------------
  * meminit - initialize memory bounds and the free memory list
@@ -155,12 +173,14 @@ void	setsegs()
 	extern int	etext;
 	struct sd	*psd;
 	uint32		np, ds_end;
+	uint32		base;	// tss base address
 
 	ds_end = 0xffffffff/PAGE_SIZE; /* End page number of Data segment */
-
+	np = ((int)&etext - 0 + PAGE_SIZE-1) / PAGE_SIZE;	/* Number of code pages */
+	
+	
 	psd = &gdt_copy[1];	/* Kernel code segment: identity map from address
 				   0 to etext */
-	np = ((int)&etext - 0 + PAGE_SIZE-1) / PAGE_SIZE;	/* Number of code pages */
 	psd->sd_lolimit = np;
 	psd->sd_hilim_fl = FLAGS_SETTINGS | ((np >> 16) & 0xff);
 
@@ -171,6 +191,38 @@ void	setsegs()
 	psd = &gdt_copy[3];	/* Kernel stack segment */
 	psd->sd_lolimit = ds_end;
 	psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
+
+	// psd = &gdt_copy[4];	/* User code segment: */
+	// psd->sd_lolimit = np;
+	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((np >> 16) & 0xff);
+
+	// psd = &gdt_copy[5];	/* User data segment */
+	// psd->sd_lolimit = ds_end;
+	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
+
+	// psd = &gdt_copy[6];	/* User stack segment */
+	// psd->sd_lolimit = ds_end;
+	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
+
+
+	// init tss
+	psd = &gdt_copy[7];
+	base = (long)(&TSS);
+	psd->sd_lobase 	= base & 0xffff;
+	psd->sd_midbase = (base >> 16) & 0xff;
+	psd->sd_hibase	= (base >> 24) & 0xff; 
+
+	// init tss in gdt
+	// for(int i = 0; i < 100; i++){
+	// 	psd = &gdt_copy[i+7];
+	// 	base = (long)(&TSS[i]);
+	// 	psd->sd_lobase 		=  base & 0xffff;
+	// 	psd->sd_midbase 	= (base >> 16) & 0xff;
+	// 	psd->sd_hibase		= (base >> 24) & 0xff; 
+	// 	psd->sd_lolimit		= 0x67;
+	// 	psd->sd_hilim_fl	= 0x00;	//G B 0 AVL hilimit 
+	// 	psd->sd_access		= 0x89;
+	// }
 
 	memcpy(gdt, gdt_copy, sizeof(gdt_copy));
 }

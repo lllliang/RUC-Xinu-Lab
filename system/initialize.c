@@ -26,6 +26,8 @@ struct	memblk	memlist;	/* List of free memory blocks		*/
 int	prcount;		/* Total number of live processes	*/
 pid32	currpid;		/* ID of currently executing process	*/
 
+extern struct TSS_ TSS;
+
 /* Control sequence to reset the console colors and cusor positiion	*/
 
 #define	CONSOLE_RESET	" \033[0m\033[2J\033[;H"
@@ -81,6 +83,10 @@ void	nulluser()
 
 	/* Create a process to finish startup and start main */
 
+	ltss(0x7 << 3);
+
+	TSS.ss0 = (0x3 << 3);
+
 	resume(create((void *)startup, INITSTK, INITPRIO,
 					"Startup process", 0, NULL));
 
@@ -108,7 +114,7 @@ local process	startup(void)
 {
 	/* Create a process to execute function main() */
 
-	resume(create((void *)main, INITSTK, INITPRIO,
+	syscall_resume(syscall_create((void *)main, INITSTK, INITPRIO,
 					"Main process", 0, NULL));
 
 	/* Startup process exits at this point */

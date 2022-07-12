@@ -416,11 +416,41 @@ _Xint38:
 
 	.globl  _Xint40			/* (reserved)			*/
 _Xint40:
-	pushal
-	movl	%esp, %eax
-	pushl	%eax
-	pushl	$40
-	jmp	Xtrap
+
+	push	%ebp
+	movl	%esp, %ebp
+	subl	$0x50, %esp
+
+	pushl	%ds
+	pushl	%es
+	pushl	%fs
+	pushl	%gs
+
+	pushl %ecx /* 参数列表 */
+	pushl %ebx /* 参数个数 */
+	pushl %eax /* id */
+
+	movl	$(0x2 << 3), %eax
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+
+	call syscall_handler
+
+	popl %ecx  /* 防止干扰eax */
+	popl %ebx
+	popl %ecx
+
+	popl	%gs
+	popl	%fs
+	popl	%es
+	popl	%ds
+
+	addl	$0x50, %esp
+	popl	%ebp
+	
+	iret/* return */
 
 	.globl  _Xint41			/* (reserved)			*/
 _Xint41:

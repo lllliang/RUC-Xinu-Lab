@@ -9,6 +9,10 @@ extern	int32	sscanf(char *, char *, int32);
 extern	int32	fscanf(int32, char *, int32);
 #define	scanf(fmt, args)	fscanf(CONSOLE, fmt, args)
 
+#define syscall_fscanf(...) \
+		do_generic_syscall(int32, SYSCALL_FSCANF, __VA_ARGS__)
+#define syscall_scanf(...) syscall_fscanf(CONSOLE, __VA_ARGS__)
+
 
 /* Definintion of standard input/ouput/error used with shell commands */
 
@@ -22,6 +26,11 @@ extern	int32	fscanf(int32, char *, int32);
 extern	int32	fprintf(int, char *, ...);
 extern	int32	printf(const char *, ...);
 extern	int32	sprintf(char *, char *, ...);
+
+#define syscall_fprintf(...) \
+		do_generic_syscall(int32, SYSCALL_FPRINTF, __VA_ARGS__)
+#define syscall_printf(...) \
+		do_generic_syscall(int32, SYSCALL_PRINTF, __VA_ARGS__)
 
 
 /* Prototypes for character input and output functions */

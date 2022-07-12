@@ -98,12 +98,22 @@ int32	set_evec(uint32 xnum, uint32 handler)
 
 	pidt = &idt[xnum];
 	pidt->igd_loffset = handler;
-	pidt->igd_segsel = 0x8;		/* Kernel code segment */
+	pidt->igd_segsel = 0x8;		/* Kernel code segment */ // 0000 1000
 	pidt->igd_mbz = 0;
 	pidt->igd_type = IGDT_INTRG;
 	pidt->igd_dpl = 0;
 	pidt->igd_present = 1;
 	pidt->igd_hoffset = handler >> 16;
+
+	if(xnum == 40){
+		pidt->igd_loffset = handler;
+		pidt->igd_segsel = (0x1 << 3);		/* User code segment */ // 0001 1000
+		pidt->igd_mbz = 0;
+		pidt->igd_type = IGDT_INTRG;
+		pidt->igd_dpl = 11; // user dpl 11
+		pidt->igd_present = 1;
+		pidt->igd_hoffset = handler >> 16;
+	}
 
 	if (xnum > 31 && xnum < 48) {
 		/* Enable the interrupt in the global IR mask */
