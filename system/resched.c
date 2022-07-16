@@ -74,12 +74,7 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 		if (ptold->prprio > firstkey(readylist) && ptold->prremain > 0) {
 			return;   //如果当前进程的优先级大于readylist
 		}
-		// if (ptold->prprio > firstkey(readylist)) {
-		// 	return;   //如果当前进程的优先级大于readylist
-		// }
-		/* Old process will no longer remain current */
 		ptold->prstate = PR_READY;
-		// insert(currpid, readylist, ptold->prprio);
 		insert2ready(currpid, ptold->prprio, ptold->prremain);
 	}
 
@@ -97,7 +92,9 @@ void	resched(void)		/* Assumes interrupts are disabled	*/
 	// syscall_ltss((7 + currpid) << 3);
 	TSS.esp0 = ptnew->esp0;
 
-	ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
+	// ctxsw(&ptold->prstkptr, &ptnew->prstkptr);
+	ctxsw(&ptold->prstkptr, &ptnew->prstkptr, (void *)ptnew->phy_page_dir);
+
 
 	/* Old process returns here when resumed */
 

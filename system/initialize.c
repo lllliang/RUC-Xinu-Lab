@@ -48,45 +48,18 @@ extern struct TSS_ TSS;
 
 void	nulluser()
 {	
-	struct	memblk	*memptr;	/* Ptr to memory block		*/
-	uint32	free_mem;		/* Total amount of free memory	*/
-	
+	SearchPages();
+
+	vminit();
 	/* Initialize the system */
-
-	sysinit();
-
-	/* Output Xinu memory layout */
-	free_mem = 0;
-	for (memptr = memlist.mnext; memptr != NULL;
-						memptr = memptr->mnext) {
-		free_mem += memptr->mlength;
-	}
-	
-	kprintf("%10d bytes of free memory.  Free list:\n", free_mem);
-	for (memptr=memlist.mnext; memptr!=NULL;memptr = memptr->mnext) {
-	    kprintf("           [0x%08X to 0x%08X]\n",
-		(uint32)memptr, ((uint32)memptr) + memptr->mlength - 1);
-	}
-
-	kprintf("%10d bytes of Xinu code.\n",
-		(uint32)&etext - (uint32)&text);
-	kprintf("           [0x%08X to 0x%08X]\n",
-		(uint32)&text, (uint32)&etext - 1);
-	kprintf("%10d bytes of data.\n",
-		(uint32)&ebss - (uint32)&data);
-	kprintf("           [0x%08X to 0x%08X]\n\n",
-		(uint32)&data, (uint32)&ebss - 1);
-
+	sysinit();	
 	/* Enable interrupts */
-
 	enable();
 
-	/* Create a process to finish startup and start main */
-
 	ltss(0x7 << 3);
-
 	TSS.ss0 = (0x3 << 3);
 
+	/* Create a process to finish startup and start main */
 	resume(create((void *)startup, INITSTK, INITPRIO,
 					"Startup process", 0, NULL));
 
@@ -147,10 +120,6 @@ static	void	sysinit()
 	/* Initialize the interrupt vectors */
 
 	initevec();
-	
-	/* Initialize free memory list */
-	
-	meminit();
 
 	/* Initialize system variables */
 
@@ -178,9 +147,13 @@ static	void	sysinit()
 	prptr->prstate = PR_CURR;
 	prptr->prprio = 0;
 	strncpy(prptr->prname, "prnull", 7);
-	prptr->prstkbase = getstk(NULLSTK);
+	prptr->phy_page_dir = KERNEL_END - PAGE_SIZE * 10;
+	prptr->prstkbase = allocstk(NULLSTK, prptr->phy_page_dir);
 	prptr->prstklen = NULLSTK;
-	prptr->prstkptr = 0;
+	prptr->prstkptr = (char*)prptr->prstkbase - prptr->prstklen; // 初始化esp
+	prptr->free_list_ptr = NULL;
+	prptr->max_heap = KERNEL_END;
+
 	currpid = NULLPROC;
 	
 	/* Initialize semaphores */
@@ -224,4 +197,44 @@ int32	delay(int n)
 {
 	DELAY(n);
 	return OK;
+}
+
+void lcr3(uint32 pgdir){
+	asm volatile(
+		"mov %0, %%cr3\n\t"
+		:
+		:"r"(pgdir)
+		:
+	);
+}
+
+void vminit(){
+	// 从32MB处获取10个页
+	// 第0个页用于页目录
+
+	Page_t *pages = (Page_t*)(KERNEL_END - PAGE_SIZE * 12);
+	memset(pages, 0, PAGE_SIZE);
+	// 1 ~ 8个页用于页表
+	for(int i = 0; i < 8; i++){
+		// KERNEL_END - PAGE_SIZE*(i+1), 向页目录中存入第i个页表
+		// 初始化页目录
+		pages[0].entries[i] = (uint32)((char *)pages + ((i + 1) * PAGE_SIZE)) | PG_P | PG_RW_W | PG_US_U;
+		for(int j = 0; j < 1024; j++){
+			// 映射页表
+			pages[i + 1].entries[j] = (((i << 10) + j) << 12) | PG_P | PG_RW_W | PG_US_U;
+		}
+	}
+	// 映射记录内核栈页
+	pages[0].entries[1021] = (uint32)((char*)pages + (9 * PAGE_SIZE)) | PG_P | PG_RW_W | PG_US_U;
+	memset((char*)pages + 9 * PAGE_SIZE, 0, PAGE_SIZE);
+	pages[9].entries[1023] = 0x6000 | PG_P | PG_RW_W | PG_US_U; // for temp
+	// 1M 
+	
+	lcr3((uint32)pages);
+	asm(
+		"movl %cr0, %eax\n\t"
+		"orl $0x80000000, %eax\n\t"
+		"movl %eax, %cr0\n\t"
+	);
+	
 }

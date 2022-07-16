@@ -47,7 +47,7 @@
 #define	MULTIBOOT_HEADER_FLAGS  0x00010003
 #define MULTIBOOT_SIGNATURE	0x2BADB002	/* Multiboot signature verification	*/
 #define MULTIBOOT_BOOTINFO_MMAP	0x00000040	/* mmap_length mmap_addr valid		*/
-#define	GDT_ENTRIES		107
+#define	GDT_ENTRIES		8
 #define	GDT_ENTRY_SIZE		8
 #define	GDT_BYTES		(GDT_ENTRIES * GDT_ENTRY_SIZE)
 #define	IDT_ENTRIES		256
@@ -112,7 +112,7 @@ start:
 	andl	$0xfffffffc, %edx	# Load mmap_end
 	addl	%ecx, %edx
 	movl	$0x0, %esp		# Initialize stack pointer to some small value
-
+	
 mmap_search_start:
 	cmpl	%edx, %ecx		# If mmap_addr >= mmap_end then quit
 	jae	mmap_search_done
@@ -172,6 +172,7 @@ mmap_search_next_sgmt:
 mmap_search_done:
 
 	# Stack pointer set continue with boot
+	# movl	$(end + 8*1024 - 4), %esp  # 从end处分配两页 end~end+8kb被用作栈
 	movl	%esp, %ebp
 	
 	/*
@@ -211,7 +212,12 @@ gdt1:
 	movw	%ax, %gs
 	movl	$0x18, %eax	/* SS descriptor 3 */
 	movw	%ax, %ss
-	
+
+	# 从end处分配8kb
+	# movl $(end + 8*1024 - 4), %esp
+	movl $0x6ff4, %esp
+	movl %esp, %ebp
+
 	/*
 	 * Call the nulluser to initialize the system
 	 */

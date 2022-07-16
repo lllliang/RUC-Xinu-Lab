@@ -43,7 +43,8 @@ extern	pid32	create(void *, uint32, pri16, char *, uint32, ...);
 		do_generic_syscall(pid32, SYSCALL_CREATE, __VA_ARGS__)
 
 /* in file ctxsw.S */
-extern	void	ctxsw(void *, void *);
+// extern	void	ctxsw(void *, void *);
+extern	void	ctxsw(void *, void *, void *);
 
 /* in file exit.c */
 extern	void	exit(void);
@@ -466,3 +467,8 @@ extern	syscall	yield(void);
 #define	ntohs(x)  ((0xff & ((x)>>8)) | ( (0xff & (x)) << 8))
 #define	ntohl(x)  ((((x)>>24) & 0x000000ff) | (((x)>> 8) & 0x0000ff00) | \
 		   (((x)<<8) & 0x00ff0000) | (((x)<<24) & 0xff000000))
+
+
+/* in file initilize.c */
+void lcr3(uint32);
+void vminit();

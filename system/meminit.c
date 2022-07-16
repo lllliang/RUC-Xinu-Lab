@@ -66,6 +66,120 @@ struct sd gdt_copy[NGD] = {
 extern	struct	sd gdt[];	/* Global segment table			*/
 
 
+uint32 free_page_num = 0;
+uint32 *Page_Dir = (uint32 *)(KERNEL_END - 12 * PAGE_SIZE);
+uint32 total_page_num = 0;
+uint32 max_phy_addr; // 最大物理地址
+
+// 搜寻空闲block 并存入page
+void SearchPages(){
+	struct	memblk	*memptr;	/* Ptr to memory block		*/
+	struct	mbmregion	*mmap_addr;	/* Ptr to mmap entries		*/
+	struct	mbmregion	*mmap_addrend;	/* Ptr to end of mmap region	*/
+	struct	memblk	*next_memptr;	/* Ptr to next memory block	*/
+	uint32	next_block_length;	/* Size of next memory block	*/
+
+	mmap_addr = (struct mbmregion*)NULL;
+	mmap_addrend = (struct mbmregion*)NULL;
+
+	/* Initialize the free list */
+	memptr = &memlist;
+	memptr->mnext = (struct memblk *)NULL;
+	memptr->mlength = 0;
+
+	/* Initialize the memory counters */
+	/*    Heap starts at the end of Xinu image */
+	minheap = (void*)KERNEL_END;
+	maxheap = minheap;
+
+	/* Check if Xinu was loaded using the multiboot specification	*/
+	/*   and a memory map was included				*/
+	if(bootsign != MULTIBOOT_SIGNATURE) {
+		panic("could not find multiboot signature");
+	}
+	if(!(bootinfo->flags & MULTIBOOT_BOOTINFO_MMAP)) {
+		panic("no mmap found in boot info");
+	}
+
+	/* Get base address of mmap region (passed by GRUB) */
+	mmap_addr = (struct mbmregion*)bootinfo->mmap_addr;
+
+	/* Calculate address that follows the mmap block */
+	mmap_addrend = (struct mbmregion*)((uint8*)mmap_addr + bootinfo->mmap_length);
+
+	/* Read mmap blocks and initialize the Xinu free memory list	*/
+	while(mmap_addr < mmap_addrend) {
+
+		/* If block is not usable, skip to next block */
+		if(mmap_addr->type != MULTIBOOT_MMAP_TYPE_USABLE) {
+			mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
+			continue;
+		}
+
+		if((uint32)maxheap < ((uint32)mmap_addr->base_addr + (uint32)mmap_addr->length)) {
+			maxheap = (void*)((uint32)mmap_addr->base_addr + (uint32)mmap_addr->length);
+		}
+
+		/* Ignore memory blocks within the Xinu image */
+		if((mmap_addr->base_addr + mmap_addr->length) < ((uint32)minheap)) {
+			mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
+			continue;
+		}
+
+		/* The block is usable, so add it to Xinu's memory list */
+
+		/* This block straddles the end of the Xinu image */
+		if((mmap_addr->base_addr <= (uint32)minheap) &&
+		  ((mmap_addr->base_addr + mmap_addr->length) >
+		  (uint32)minheap)) {
+
+			/* This is the first free block, base address is the minheap */
+			next_memptr = (struct memblk *)roundmb(minheap);
+
+			/* Subtract Xinu image from length of block */
+			next_block_length = (uint32)truncmb(mmap_addr->base_addr + mmap_addr->length - (uint32)minheap);
+			uint32 temp = (uint32)next_memptr;
+			for(int i = 0; i < next_block_length / PAGE_SIZE; i++){
+				free_page_num++;
+				*(Page_Dir - free_page_num) = temp;
+				temp += 4096;
+			}
+		} 
+		else {
+
+			/* Handle a free memory block other than the first one */
+			next_memptr = (struct memblk *)roundmb(mmap_addr->base_addr);
+
+			/* Initialize the length of the block */
+			next_block_length = (uint32)truncmb(mmap_addr->length);
+			uint32 temp = (uint32)next_memptr;
+			for(int i = 0; i < next_block_length / PAGE_SIZE; i++){
+				free_page_num++;
+				*(Page_Dir - free_page_num) = temp;
+				temp += 4096;
+			}
+		}
+
+		/* Add then new block to the free list */
+		memptr->mnext = next_memptr;
+		memptr = memptr->mnext;
+		memptr->mlength = next_block_length;
+		memlist.mlength += next_block_length;
+
+		/* Move to the next mmap block */
+		mmap_addr = (struct mbmregion*)((uint8*)mmap_addr + mmap_addr->size + 4);
+	}
+
+	/* End of all mmap blocks, and so end of Xinu free list */
+	if(memptr) {
+		memptr->mnext = (struct memblk *)NULL;
+	}
+	total_page_num = free_page_num;
+	max_phy_addr = *(Page_Dir - free_page_num);
+}
+
+
+
 
 /*------------------------------------------------------------------------
  * meminit - initialize memory bounds and the free memory list
@@ -191,19 +305,6 @@ void	setsegs()
 	psd = &gdt_copy[3];	/* Kernel stack segment */
 	psd->sd_lolimit = ds_end;
 	psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
-
-	// psd = &gdt_copy[4];	/* User code segment: */
-	// psd->sd_lolimit = np;
-	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((np >> 16) & 0xff);
-
-	// psd = &gdt_copy[5];	/* User data segment */
-	// psd->sd_lolimit = ds_end;
-	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
-
-	// psd = &gdt_copy[6];	/* User stack segment */
-	// psd->sd_lolimit = ds_end;
-	// psd->sd_hilim_fl = FLAGS_SETTINGS | ((ds_end >> 16) & 0xff);
-
 
 	// init tss
 	psd = &gdt_copy[7];

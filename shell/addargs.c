@@ -46,10 +46,16 @@ status	addargs(
 
 	/* Compute lowest location in the process stack where the	*/
 	/*	args array will be stored followed by the argument	*/
-	/*	strings							*/
-	
-	aloc = (uint32) (prptr->prstkbase
-		- prptr->prstklen + sizeof(uint32));
+	/*	strings					*/
+	uint32 stk_pg = proctab[pid].phy_page_dir;
+	AccessTemp(stk_pg);
+	stk_pg = GET_ENTRY(1023);
+	AccessTemp(stk_pg);
+	stk_pg = GET_ENTRY(1023);
+	AccessTemp(stk_pg);
+	aloc = (uint32)(0x1fff000 - prptr->prstklen + sizeof(uint32));
+	// aloc = (uint32) (prptr->prstkbase
+	// 	- prptr->prstklen + sizeof(uint32));
 	argloc = (uint32*) ((aloc + 3) & ~0x3);	/* round multiple of 4	*/
 
 	/* Compute the first location beyond args array for the strings	*/
@@ -74,8 +80,8 @@ status	addargs(
 
 	/* Find the second argument in process's stack */
 
-	for (search = (uint32 *)prptr->prstkptr;
-	     search < (uint32 *)prptr->prstkbase; search++) {
+	for (search = (uint32 *)((uint32)prptr->prstkptr & 0x1ffffff);
+	     search < (uint32 *)((uint32)prptr->prstkbase & 0x1fffffff); search++) {
 
 		/* If found, replace with the address of the args vector*/
 

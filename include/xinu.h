@@ -30,5 +30,6 @@
 #include <meminit.h>
 #include <syscalls.h>
 #include <stdarg.h>
+#include <vm.h>
 
 

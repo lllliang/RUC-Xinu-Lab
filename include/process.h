@@ -55,6 +55,9 @@ struct procent {		/* Entry in the process table		*/
 	uint32	prtime; 	/* 记录程序运行时间 */
 	uint16	prremain;	/* 剩下可运行的时间数 */
 	uint32 *esp0;
+	uint32  phy_page_dir;
+	uint32 	free_list_ptr;
+	uint32 	max_heap;
 };
 
 /* Marker for the top of a process stack (used to help detect overflow)	*/
