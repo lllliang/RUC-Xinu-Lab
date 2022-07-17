@@ -64,6 +64,9 @@ typedef struct Page{
 
 // 将byte转化为Page数，并且向上进位
 #define Byte2Page(bytes)    (((bytes + PAGE_SIZE-1) & (~(PAGE_SIZE - 1))) / PAGE_SIZE)
+#define ROUNDTO 8
+#define ROUND(size)     (((size) + (ROUNDTO - 1)) & (~(ROUNDTO - 1)))
+#define SIZE_T_SIZE     (ROUND(sizeof(uint32)))
 
 #define WRITE_ENTRY(index, entry)   ((Page_t *)0x1fff000)->entries[index] = entry
 #define GET_ENTRY(index)            ((Page_t *)0x1fff000)->entries[index]
@@ -85,15 +88,22 @@ extern uint32 *Page_Dir;
 extern uint32 total_page_num;
 extern uint32 max_phy_addr; // 最大物理地址
 
-char* allocstk(uint32, uint32);
-char* alloc_kstk(uint32, uint32);
-char* alloc_ustk(uint32, uint32);
-void AccessTemp(uint32);
-void AccessKernel(uint32);
-void AccessUser(uint32);
+char*   allocstk(uint32, uint32);
+char*   alloc_kstk(uint32, uint32);
+char*   alloc_ustk(uint32, uint32);
+void    AccessTemp(uint32);
+void    AccessKernel(uint32);
+void    AccessUser(uint32);
 Page_t* AllocPage();
-void FreePage(Page_t*);
-char* allocmem(uint32);
+void    FreePage(Page_t*);
+char*   allocmem(uint32);
 syscall deallocmem(char*, uint32);
-void InitializeFreeList();
-uint32 heapsbrk(uint32);
+void    InitializeFreeList();
+uint32  heapsbrk(uint32);
+void    SetAllocTag(uint32 *, uint32);
+void    SetFreeTag(uint32 *, uint32);
+uint32* ScanFreeBlock(uint32);
+void    DeleteFreeBlock(uint32 *);
+void    AssignFreeBlock(uint32 *, uint32 *, uint32);
+void    InsertFreeBlock(uint32 *);
+void    FreeHeapPage(uint32);
