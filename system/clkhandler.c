@@ -42,7 +42,7 @@ void	clkhandler(void)
 	prptr->prremain--;
 	if((--prptr->prremain) <= 0){
 		preempt = QUANTUM;
-		// resched();
+		resched();
 		return;
 	}
 
@@ -51,6 +51,6 @@ void	clkhandler(void)
 
 	if((--preempt) <= 0) {
 		preempt = QUANTUM;
-		// resched();
+		resched();
 	}
 }

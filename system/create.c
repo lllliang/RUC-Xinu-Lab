@@ -81,7 +81,6 @@ pid32	create(
 	uint32 *saddr_ = saddr; //0xfffffffc
 	uint32 *usaddr_ = usaddr; //0xffbffffc
 	saddr = (uint32 *)0x1ffeffc; //这里采用临时映射
-	// saddr = (uint32 *)0x1fffffc; //这里采用临时映射
 	usaddr = (uint32 *)0x1ffdffc;
 	*saddr = STACKMAGIC;
 	*usaddr = STACKMAGIC;

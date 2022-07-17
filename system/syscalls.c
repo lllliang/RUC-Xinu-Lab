@@ -66,9 +66,7 @@ uint32 syscall_handler(const uint32 id, const uint32 args_count, const uint32* a
 	else if(id == 13) __asm("call kill");
 	else if(id == 14) __asm("call getpid");
 	else if(id == 15) __asm("call ltss");
-	else if(id == 16) __asm("call addargs");
-
-	
+	else if(id == 16) __asm("call addargs");	
 }
 
 
