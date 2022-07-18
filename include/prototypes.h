@@ -472,3 +472,10 @@ extern	syscall	yield(void);
 /* in file initilize.c */
 void lcr3(uint32);
 void vminit();
+
+
+/* in file kbd.c */
+extern devcall kbdgetc(struct dentry *devptr);
+extern devcall vgaputc(struct dentry *devptr, char ch);
+extern devcall kbdinit(struct dentry* devptr);
+extern interrupt kbddisp(void);

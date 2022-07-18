@@ -1,4 +1,6 @@
 /* xinu.h - include all system header files */
+#ifndef _xinu_H
+#define _xinu_H
 
 #include <kernel.h>
 #include <conf.h>
@@ -32,4 +34,4 @@
 #include <stdarg.h>
 #include <vm.h>
 
-
+#endif

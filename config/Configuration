@@ -63,7 +63,9 @@ nam:
 		-r ioerr 	-g ioerr 	-p ioerr
 		-w ioerr 	-s ioerr 	-n ioerr
 		-intr ioerr
-
+kbd:
+	on kbd 
+		-i kbdinit -intr kbddisp
 %%
 
 /* Actual device declarations that each give the name of a device that	*/
@@ -86,6 +88,8 @@ nam:
    LFILESYS is lfs on ram
 
    /* Define local file pseudo-devices (multiple per system) */
+
+	kbd is kbd on kbd
 
    LFILE0 is lfl on lfs
    LFILE1 is lfl on lfs
