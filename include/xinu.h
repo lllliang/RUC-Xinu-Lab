@@ -29,6 +29,7 @@ extern "C" {
 #include <multiboot.h>
 #include <stdio.h>
 #include <string.h>
+#include <disk.h>
 
 #include <filesystem.h>
 
